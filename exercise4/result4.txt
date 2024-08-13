@@ -1,0 +1,2 @@
+i: アドレス=0xd34ffff8bc 値=20
+p: アドレス=0xd34ffff8b0 値=0xd34ffff8bc 指す先の値=20
