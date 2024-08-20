@@ -9,11 +9,11 @@ struct SAMPLE_t
     long m4;
     char m5;
     void* m6;
-}a;
+};
 
 int main(void)
 {
-    a;
+    struct SAMPLE_t a;
     
     printf("構造体のサイズ=%zu メンバの合計サイズ=%zu\n"
            "char m1オフセット=%zu サイズ=%zu\n"
