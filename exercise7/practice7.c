@@ -17,8 +17,6 @@ int main(void)
  * 
  * @details プログラムを起動してから呼び出すたびに1インクリメントした値を返す関数
  * 
- * @remark 演習で指定されているため、この関数名を使用しました。
- * 
  * @return 1インクリメントした値を返す
  */
 static int static_counter()
