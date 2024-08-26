@@ -1,0 +1,3 @@
+$ ./a.out pram1 pram2
+1:pram1
+2:pram2
