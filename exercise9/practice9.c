@@ -4,15 +4,15 @@ void swap_int(int *a, int *b);
 
 int main(void)
 {
-        int u, v;
-        u = 2;
-        v = 3;
-
-        printf("u=%d v=%d\n", u, v);
-        swap_int(&u, &v);
-        printf("u=%d v=%d\n", u, v);
-
-        return 0;
+	int u, v;
+	u = 2;
+	v = 3;
+	
+	printf("u=%d v=%d\n", u, v);
+	swap_int(&u, &v);
+	printf("u=%d v=%d\n", u, v);
+	
+	return 0;
 }
 
 /**
@@ -24,9 +24,9 @@ int main(void)
  */
 void swap_int(int *a, int *b)
 {
-        int tmp;
+	int tmp;
 
 	tmp = *a;
-        *a = *b;
-        *b = tmp;
+	*a = *b;
+	*b = tmp;
 }
