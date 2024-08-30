@@ -7,36 +7,46 @@ typedef struct DAT_t{
 	const char* s;
 }DAT;
 
+int compare_DAT_t(const void *a, const void *b);
+
 /**
  * @brief ソート関数
  *
- * @details int型のnを比較してからchar型のsを比較する関数
+ * @details struct DAT_tのint nを比較してからchar* sを比較する関数
  *
- * @return n1がn2より小さい場合は-1を、大きい場合は1を、同じ場合はs1とs2を比較する
+ * @param[out] a DATのメンバにアクセスするポインタ1
+ *
+ * @param[out] b DATのメンバにアクセスするポインタ2
+ *
+ * @return dat1のnがdat2のnより小さい場合は-1を、大きい場合は1を、同じ場合はsを比較する
  */
-int compare(const void *a, const void *b){
-	DAT *dat1 = (DAT *)a;
-	DAT *dat2 = (DAT *)b;
+int compare_DAT_t(const void *a, const void *b){
+	const DAT *dat1 = (const DAT *)a;
+	const DAT *dat2 = (const DAT *)b;
 
-	if (dat1->n < dat2->n) return -1;
-	if (dat1->n > dat2->n) return 1;
+	if (dat1->n < dat2->n) {
+		return -1;
+	}
+	if (dat1->n > dat2->n) {
+		return 1;
+	}
 
 	return strcmp(dat1->s, dat2->s);
 }
 
 int main(void)
 {
-	DAT dat[]={
+	DAT dat[] = {
 		{9,"A"},
 		{2,"A"},
 		{5,"AB"},
 		{5,"AA"},
 	};
 	
-	size_t numDat = sizeof(dat) / sizeof(dat[0]);
-	qsort(dat, numDat, sizeof(DAT), compare);
+	size_t num_dat = sizeof(dat) / sizeof(dat[0]);
+	qsort(dat, num_dat, sizeof(DAT), compare_DAT_t);
 
-	for (size_t i = 0; i < numDat; i++) {
+	for (size_t i = 0; i < num_dat; i++) {
 		printf("n: %d, s: %s\n", dat[i].n, dat[i].s);
 	}
 
