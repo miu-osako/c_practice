@@ -7,6 +7,13 @@ typedef struct DAT_t{
 	const char* s;
 }DAT;
 
+/**
+ * @brief ソート関数
+ *
+ * @details int型のnを比較してからchar型のsを比較する関数
+ *
+ * @return n1がn2より小さい場合は-1を、大きい場合は1を、同じ場合はs1とs2を比較する
+ */
 int compare(const void *a, const void *b){
 	DAT *dat1 = (DAT *)a;
 	DAT *dat2 = (DAT *)b;
