@@ -38,7 +38,7 @@ int main(void)
  *
  * @param[in] b 大小比較の対象2
  *
- * @return aが大きい場合1、bが大きい場合-1を返し、同値の場合sを比較し、辞書順に並ぶよう戻り値を返す
+ * @return aが大きい場合1、bが大きい場合-1、同値の場合0を返す
  */
 int compare_DAT_t(const void *a, const void *b)
 {
@@ -48,10 +48,8 @@ int compare_DAT_t(const void *a, const void *b)
 	if (dat1->n < dat2->n) {
 		return -1;
 	}
-	else if (dat1->n > dat2->n) {
+	if (dat1->n > dat2->n) {
 		return 1;
 	}
-	else{
 		return strcmp(dat1->s, dat2->s);
-	}
 }
