@@ -47,8 +47,8 @@ int compare_DAT_t(const void *a, const void *b)
 	
 	if (dat1->n < dat2->n) {
 		return -1;
-	}else if (dat1->n > dat2->n) {
+	} else if (dat1->n > dat2->n) {
 		return 1;
 	}
-		return strcmp(dat1->s, dat2->s);
+	return strcmp(dat1->s, dat2->s);
 }
