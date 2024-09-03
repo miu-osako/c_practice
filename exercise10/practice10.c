@@ -38,7 +38,7 @@ int main(void)
  *
  * @param[in] b 大小比較の対象2
  *
- * @return aが大きい場合1、bが大きい場合-1、同値の場合0を返す
+ * @return aが大きい場合正の値、bが大きい場合負の値、同じ場合0を返す
  */
 int compare_DAT_t(const void *a, const void *b)
 {
