@@ -31,6 +31,7 @@ int main(void)
 
 /**
  * @brief 比較関数
+ * @details struct DAT_tのint nを比較、同値の場合char* sを比較
  *
  * @param[in] a 大小比較の対象1
  * @param[in] b 大小比較の対象2
