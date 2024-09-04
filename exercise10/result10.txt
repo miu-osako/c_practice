@@ -1,0 +1,5 @@
+$ ./a.out
+n: 2, s: A
+n: 5, s: AA
+n: 5, s: AB
+n: 9, s: A
