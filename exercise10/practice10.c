@@ -32,10 +32,7 @@ int main(void)
 /**
  * @brief 比較関数
  *
- * @details struct DAT_tのint nを比較して、同値の場合char* sも比較する関数
- *
  * @param[in] a 大小比較の対象1
- *
  * @param[in] b 大小比較の対象2
  *
  * @return aが大きい場合正の値、bが大きい場合負の値、同じ場合0を返す
