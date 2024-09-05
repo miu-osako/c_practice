@@ -1,0 +1,3 @@
+$ ./display_file test.txt
+test
+test
