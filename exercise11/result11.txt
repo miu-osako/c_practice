@@ -1,3 +1,4 @@
 $ ./display_file test.txt
-test
-test
+test1
+test2
+test2
