@@ -3,29 +3,32 @@
 
 int main(int argc, char *argv[])
 {
-	char str[100];
-
-	FILE *file = NULL;
+	int max_length;
+	char str[max_length];
+	
+	max_length= 256;
+	FILE *fp = NULL;
+	
 	if (argc != 2) {
 		printf("usage: display_file filename\n");
 		return 1;
 	}
 
-	file = fopen(argv[1], "r");
-	if (file == NULL) {
+	fp = fopen(argv[1], "r");
+	if (fp == NULL) {
 		printf("error opening file\n");
 		return -1;
 	}
 
-	while (!feof(file)) {
-		fgets(str, 100, file) == NULL;
-		printf("%s", str);
+	while (!feof(fp)) {
+		fgets(str, max_length, fp);
+		printf("%s",str);
 	}
 	
-	if (ferror(file)) {
-		printf("error closing file\n");
-	}
-	
-	fclose(file);
+	fclose(fp);
+	if (ferror(fp)) {
+                printf("error closing file\n");
+        }
+
 	return 0;
 }
