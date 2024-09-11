@@ -19,4 +19,4 @@ $(PROGRAM): $(OBJS)
 
 #クリーンターゲット
 clean:
-	rm -f practice11.o $(PROGRAM) $(OBJS)
+	rm -f $(PROGRAM) $(OBJS)
