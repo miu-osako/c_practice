@@ -1,5 +1,7 @@
 #include<stdio.h>
 #include<stdlib.h>
+#include<string.h>
+#include<errno.h>
 
 #define READ_FILE_MAX 256 /*ファイル読み込み最大バイト数を定義*/
 #define SUCCESS 0 /*正常終了*/
@@ -10,7 +12,7 @@ int main(int argc, char *argv[])
 	char str[READ_FILE_MAX];
 	const char *infile;
 	FILE *fp = NULL;
-	int chk;
+	int file_close_status;
 	int rc = 0;
 
 	if (argc != 2) {
@@ -21,7 +23,7 @@ int main(int argc, char *argv[])
 	infile = argv[1];
 	fp = fopen(infile, "r");
 	if (fp == NULL) {
-		perror("error opening file\n");
+		fprintf(stderr, "error opening '%s': %s\n", infile, strerror(errno));
 		return FAILURE;
 	}
 
@@ -33,8 +35,8 @@ int main(int argc, char *argv[])
 		rc = FAILURE;
 	}
 	
-	chk = fclose(fp);
-	if (chk != 0) {
+	file_close_status = fclose(fp);
+	if (file_close_status != 0) {
 		perror("error closing file\n");
 		return FAILURE;
 	}
