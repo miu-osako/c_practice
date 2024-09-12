@@ -2,37 +2,41 @@
 #include<stdlib.h>
 
 #define READ_FILE_MAX 256 /*ファイル読み込み最大バイト数を定義*/
+#define SUCCESS 0 /*正常終了*/
+#define FAILURE 1 /*異常終了*/
 
 int main(int argc, char *argv[])
 {
-	char str[READ_FILE_MAX + 1];
+	char str[READ_FILE_MAX];
 	const char *infile;
 	FILE *fp = NULL;
+	int chk;
 	int rc = 0;
 
 	if (argc != 2) {
-		printf("usage: display_file filename\n");
-		return 1;
+		fprintf(stderr, "usage: display_file filename\n");
+		return FAILURE;
 	}
 
 	infile = argv[1];
 	fp = fopen(infile, "r");
 	if (fp == NULL) {
 		perror("error opening file\n");
-		return 1;
+		return FAILURE;
 	}
 
-	while (fgets(str, READ_FILE_MAX + 1, fp) != NULL) {
+	while (fgets(str, sizeof(str), fp) != NULL) {
 		printf("%s", str);
 	}
-	if (!feof(fp)) {
+	if (ferror(fp)) {
 		perror("error reading file\n");
-		rc = 1;
+		rc = FAILURE;
 	}
 	
-	if (fclose(fp) != 0) {
+	chk = fclose(fp);
+	if (chk != 0) {
 		perror("error closing file\n");
-		return 1;
+		return FAILURE;
 	}
 
 	return rc;
