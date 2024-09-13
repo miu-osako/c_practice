@@ -1,0 +1,9 @@
+$ make
+gcc -Wall -Wextra -Werror -O3   -c -o practice11.o practice11.c
+gcc -Wall -Wextra -Werror -O3 -o display_file practice11.o
+$ ./display_file test.txt
+test1
+test2
+
+$ ./display_file
+usage: display_file filename
