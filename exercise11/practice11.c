@@ -3,7 +3,7 @@
 #include<string.h>
 #include<errno.h>
 
-#define READ_FILE_MAX 256 /*ファイル読み込み最大バイト数を定義*/
+#define READ_FILE_MAX 8192 /*ファイル読み込み最大バイト数を定義*/
 #define SUCCESS 0 /*正常終了*/
 #define FAILURE 1 /*異常終了*/
 
@@ -13,7 +13,7 @@ int main(int argc, char *argv[])
 	const char *infile;
 	FILE *fp = NULL;
 	int file_close_status;
-	int rc = 0;
+	int rc = SUCCESS;
 
 	if (argc != 2) {
 		fprintf(stderr, "usage: display_file filename\n");
