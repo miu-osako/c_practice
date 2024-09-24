@@ -11,12 +11,11 @@ int main(int argc, char* argv[])
 	size_t i;
 	FILE *fp;
 	size_t read_size;
-	unsigned long ADDRESS = 0;
+	unsigned long address = 0;
 
 	if (argc != 2) {
 		fprintf(stderr, "usage: %s filename\n"
-			"options: filename ファイル名\n",
-			argv[0]);
+			"options: filename ファイル名\n", argv[0]);
 		return FAILURE;
 	}
 
@@ -28,15 +27,15 @@ int main(int argc, char* argv[])
 
 	while ((read_size = fread(bytes, sizeof(unsigned char), 
 		BYTES_HEX, fp)) > 0) {
-		printf("%08lx", ADDRESS);
+		printf("%08lx", address);
 		for (i = 0; i < read_size; i++) {
 			printf("%02X ", bytes[i]);
 		}
-		for (i = 0; i < BYTES_HEX; i++) {
+		for (i = read_size; i < BYTES_HEX; i++) {
 			printf(" ");
 		}
 		printf("\n");
-		ADDRESS += BYTES_HEX;
+		address += read_size;
 	}
 
 	if (ferror(fp)) {
