@@ -1,17 +1,22 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <errno.h>
 
-#define BYTES_HEX 16 /*16進数表記*/
-#define SUCCESS 0 /*正常終了*/
-#define FAILURE 1 /*異常終了*/
+#define MAX_BYTE 16 /* 1行あたりのバイト */
+#define SUCCESS 0 /* 正常終了 */
+#define FAILURE 1 /* 異常終了 */
 
 int main(int argc, char* argv[])
 {
-	unsigned char bytes[BYTES_HEX];
-	size_t i;
+	unsigned char input_byte[MAX_BYTE];
+	char out[MAX_BYTE * 3 + 1];
+	size_t i, read_size;
+	const char *infile;
 	FILE *fp;
-	size_t read_size;
-	unsigned long address = 0;
+	unsigned long index = 0;
+	int file_close_status;
+	int rc = SUCCESS;
 
 	if (argc != 2) {
 		fprintf(stderr, "usage: %s filename\n"
@@ -19,30 +24,33 @@ int main(int argc, char* argv[])
 		return FAILURE;
 	}
 
-	fp = fopen(argv[1], "rb");
+	infile = argv[1];
+	fp = fopen(infile, "rb");
 	if (fp == NULL) {
-		perror("error opening file\n");
+		fprintf(stderr, "error opening '%s': %s\n", infile, strerror(errno));
 		return FAILURE;
 	}
 
-	while ((read_size = fread(bytes, sizeof(unsigned char), 
-		BYTES_HEX, fp)) > 0) {
-		printf("%08lx", address);
+	printf("ADDRESS  00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F\n");
+	while (!feof(fp)) {
+		read_size = fread(input_byte, sizeof(unsigned char), MAX_BYTE, fp);
+		if (ferror(fp)) {
+			perror("fread error");
+			rc = FAILURE;
+			break;
+		}
 		for (i = 0; i < read_size; i++) {
-			printf("%02X ", bytes[i]);
+			sprintf(out + i * 3, " %02X", input_byte[i]);
 		}
-		for (i = read_size; i < BYTES_HEX; i++) {
-			printf(" ");
-		}
-		printf("\n");
-		address += read_size;
+		printf("%07lx0%s\n", index, out);
+		index++;
 	}
 
-	if (ferror(fp)) {
-		perror("error reading file");
+	file_close_status = fclose(fp);
+	if (file_close_status != 0) {
+		perror("error closing file\n");
 		return FAILURE;
 	}
 
-	fclose(fp);
-	return SUCCESS;
+	return rc;
 }
