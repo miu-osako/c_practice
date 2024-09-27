@@ -15,7 +15,7 @@ int main(int argc, char* argv[])
 	size_t i, read_size;
 	const char *infile;
 	FILE *fp;
-	unsigned long index = 0;
+	unsigned int index = 0;
 	int file_close_status;
 	int rc = SUCCESS;
 
@@ -44,7 +44,7 @@ int main(int argc, char* argv[])
 		/* 入力文字1文字につき、HEX表記の下2桁(0xXXのXX)を使用するため2バイト、半角スペースの1バイトの合計3バイトを使う。そのため入力文字の1文字目はout[0]から始まり2文字目以降の添え字は3の倍数となる。 */
 			sprintf(out + i * 3, " %02X", input_byte[i]);
 		}
-		printf("%07lX0%s\n", index, out);
+		printf("%07X0%s\n", index, out);
 		index++;
 	}
 
