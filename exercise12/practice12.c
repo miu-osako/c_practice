@@ -10,6 +10,7 @@
 int main(int argc, char* argv[])
 {
 	unsigned char input_byte[MAX_BYTE];
+	/* 入力文字1文字につき、HEX表記の下2桁(0xXXのXX)を使用するため2 バイト、半角スペースの1バイトの合計3バイトを使う。最後にNULL文字が入るため、+1している。 */
 	char out[MAX_BYTE * 3 + 1];
 	size_t i, read_size;
 	const char *infile;
@@ -19,8 +20,8 @@ int main(int argc, char* argv[])
 	int rc = SUCCESS;
 
 	if (argc != 2) {
-		fprintf(stderr, "usage: %s filename\n"
-			"options: filename ファイル名\n", argv[0]);
+		fprintf(stderr, "usage: hexdump filename\n"
+			"options: filename ファイル名\n");
 		return FAILURE;
 	}
 
@@ -40,9 +41,10 @@ int main(int argc, char* argv[])
 			break;
 		}
 		for (i = 0; i < read_size; i++) {
+		/* 入力文字1文字につき、HEX表記の下2桁(0xXXのXX)を使用するため2バイト、半角スペースの1バイトの合計3バイトを使う。そのため入力文字の1文字目はout[0]から始まり2文字目以降の添え字は3の倍数となる。 */
 			sprintf(out + i * 3, " %02X", input_byte[i]);
 		}
-		printf("%07lx0%s\n", index, out);
+		printf("%07lX0%s\n", index, out);
 		index++;
 	}
 

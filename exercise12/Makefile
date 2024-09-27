@@ -5,7 +5,7 @@ CC = gcc
 CFLAGS = -Wall -Wextra -O2
 
 # 出力ファイル名 (作成する実行ファイル)
-PROGRAM = a.out
+PROGRAM = hexdump
 
 #オブジェクトファイル
 OBJS = practice12.o
