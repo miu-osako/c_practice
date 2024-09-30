@@ -45,7 +45,7 @@ int main(int argc, char* argv[])
  *
  * @details ファイルを読み込み16進ダンプをアドレスと共に表示する関数
  *
- * @param[in] file ポインタファイルを読み込む
+ * @param[in] file 読み込みファイルのファイルポインタ
  *
  * @return 正常時SUCCESSを、異常時FAILUREを返す
  */
