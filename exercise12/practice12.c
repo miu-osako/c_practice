@@ -10,7 +10,8 @@
 int main(int argc, char* argv[])
 {
 	unsigned char input_byte[MAX_BYTE];
-	/* 入力文字1文字につき、HEX表記の下2桁(0xXXのXX)を使用するため2 バイト、半角スペースの1バイトの合計3バイトを使う。最後にNULL文字が入るため、+1している。 */
+	/* 入力文字1文字につき、HEX表記の下2桁(0xXXのXX)を使用するため2 バイト、
+ 	半角スペースの1バイトの合計3バイトを使う。最後にNULL文字が入るため、+1している。 */
 	char out[MAX_BYTE * 3 + 1];
 	size_t i, read_size;
 	const char *infile;
@@ -36,12 +37,14 @@ int main(int argc, char* argv[])
 	while (!feof(fp)) {
 		read_size = fread(input_byte, sizeof(unsigned char), MAX_BYTE, fp);
 		if (ferror(fp)) {
-			perror("fread error");
+			perror("fread error\n");
 			rc = FAILURE;
 			break;
 		}
 		for (i = 0; i < read_size; i++) {
-		/* 入力文字1文字につき、HEX表記の下2桁(0xXXのXX)を使用するため2バイト、半角スペースの1バイトの合計3バイトを使う。そのため入力文字の1文字目はout[0]から始まり2文字目以降の添え字は3の倍数となる。 */
+		/* 入力文字1文字につき、HEX表記の下2桁(0xXXのXX)を使用するため2バイト、
+		半角スペースの1バイトの合計3バイトを使う。
+		そのため入力文字の1文字目はout[0]から始まり2文字目以降の添え字は3の倍数となる。 */
 			sprintf(out + i * 3, " %02X", input_byte[i]);
 		}
 		printf("%07X0%s\n", index, out);
