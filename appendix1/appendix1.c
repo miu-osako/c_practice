@@ -17,13 +17,13 @@ int main(int argc, char *argv[])
 	size = strtol(argv[1], &end, 10);
 	switch (*end) {
 		case 'M':
-		size = size * 1024 * 1024;
-		break;
+		    size = size * 1024 * 1024;
+		    break;
 		case 'K':
-		size = size * 1024;
-		break;
+		    size = size * 1024;
+		    break;
 		default:
-		break;
+		    break;
 	}
 	
 	array = (char *)malloc(size);
@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "Error allocating memory.\n");
 		return 1;
 	}
-	printf("1 = size = %zu\naddress = %p\n", size, (void*)array);
+	printf("size = %zu\naddress = %p\n", size, (void *)array);
 
 	free(array);
 
