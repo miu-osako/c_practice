@@ -4,7 +4,7 @@
 
 // エラー
 #define SUCCESS 0 // 正常終了
-#define FAILURE 1 // 引数エラー
+#define ERR_PARAM 1 // 引数エラー
 #define ERR_OPN_FILE 2 // ファイルオープンエラー
 #define ERR_FILE_FORMAT 3 //入力ファイルフォーマットエラー
 #define ERR_DBFILE_FORMAT 4 // databaseファイルフォーマットエラー
@@ -46,11 +46,11 @@ struct param_list {
 	char *infile;
 	char *in_dbfile;
 	char *out_dbfile;
-}
+};
 
 // 引数チェック関数
 int check_argc(int argc, char *argv[], struct param_list *plist) {
-	int ret = FAILURE;
+	int ret = ERR_PARAM;
 	int i;
 	plist->mode = MODE_NOTSET;
 	
@@ -74,6 +74,9 @@ int check_argc(int argc, char *argv[], struct param_list *plist) {
 			}
 			plist->in_dbfile = argv[i];
 		} else if (strcmp(argv[i], "-o") == 0) {
+			if (plist->mode == MODE_DISPLAY) {
+				goto end;
+			}
 			if (i++ >= argc) {
 				goto end;
 			}
@@ -83,33 +86,30 @@ int check_argc(int argc, char *argv[], struct param_list *plist) {
 		}
 	}
 
-	// モードチェック
-	if (plist->mode == MODE_DISPLAY && plist->out_dbfile) {
-		goto end;
-	}
-
 	ret = SUCCESS;
 	
 end:
-	fprintf(stderr, "usage: wcount [-o database] -i infile\n"
-					"		wcount -r database\n");
+	fprintf(stderr, MSG_ERR_PARA);
 	return ret;
 }
 
 // main関数
 int main(int argc, char *argv[]) {
 	struct param_list plist = {0};
+	FILE *fp;
+	int file_close_status;
+	int rc = SUCCESS;
 
 	if (check_argc(argc, argv, &plist) != SUCCESS) {
-		return FAILURE;
+		return ERR_PARAM;
 	}
 
-// 	FILE *fp;	
-	// if ((fp = fopen(argv[2],"r")) == NULL) {
-	// 	perror("file open error\n");
-	// 	return 1;
-// }
-// 	count_words(fp);
-// 	fclose(fp);
-	return SUCCESS;
+	if ((fp = fopen(plist->infile,"r")) == NULL) {
+		fprintf(stderr, MSG_ERR_OPN_FILE);
+		return ERR_PARAM;
+	}
+
+	file_close_status = fclose(fp);
+
+	return rc;
 }
