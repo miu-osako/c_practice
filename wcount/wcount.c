@@ -50,8 +50,7 @@ struct param_list {
 
 // 引数チェック関数
 int check_argc(int argc, char *argv[], struct param_list *plist) {
-	int ret = ERR_PARAM;
-	int i;
+	int i, ret = ERR_PARAM;
 	plist->mode = MODE_NOTSET;
 	
 	for (i = 1; i < argc; i++) {
@@ -104,7 +103,7 @@ int main(int argc, char *argv[]) {
 		return ERR_PARAM;
 	}
 
-	if ((fp = fopen(plist->infile,"r")) == NULL) {
+	if ((fp = fopen(plist.infile,"r")) == NULL) {
 		fprintf(stderr, MSG_ERR_OPN_FILE);
 		return ERR_PARAM;
 	}
