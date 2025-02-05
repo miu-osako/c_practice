@@ -28,17 +28,73 @@
 #define MSG_ERR_MALLOC "memory allocation error.\n" //メモリ確保エラーメッセージ
 #define MSG_ERR_SYSTEM "system error.\n" //その他、致命的なエラーメッセージ
 
-// word_data型構造体
-// typedef struct word_data_t {
-// 	char *word;
-// 	int count;
-// 	struct word_data_t *next;
-// } word_data;
+//word_data型構造体
+typedef struct word_data_t {
+	char *word;
+	int count;
+	struct word_data_t *next;
+} word_data;
 
-// void count_words() {
-// 	WordData[];
-// 	int word_count = 0;
-// }
+//リストに単語を入れる関数
+int insert_into_list(word_data **head, char *input) {
+	if (!input) {
+		return ERR_PARAM;
+	}
+	if (*head == NULL) {
+		word_data *new_node = (word_data *)malloc(sizeof(word_data));
+		if (!new_node) {
+			return ERR_MALLOC;
+		}
+
+		new_node->word = strdup(input);
+		new_node->count = 1;
+		new_node->next = NULL;
+
+		*head = new_node;
+		return SUCCESS;
+	}
+
+	word_data *current = *head;
+	while (current != NULL) {
+		if (strcmp(current->word, input) == 0) {
+			current->count++;
+			return SUCCESS;
+		}
+		current = current->next;
+	}
+
+	word_data *new_node = (word_data *)malloc(sizeof(word_data));
+	if (!new_node) {
+		return ERR_MALLOC;
+	}
+
+	new_node->word = strdup(input);
+	new_node->count = 1;
+	new_node->next = *head;
+
+	*head = new_node;
+
+	return SUCCESS;
+}
+
+//リストの内容を表示する関数
+void print_list(word_data *head) {
+	while (head != NULL) {
+		printf("%s			%d			\n", head->word, head->count);
+		head = head->next;
+	}
+}
+
+//リストを解放する関数
+void free_list(word_data *head) {
+	word_data *current = head;
+	while (current != NULL) {
+		word_data *temp = current;
+		current = current->next;
+		free(temp->word);
+		free(temp);
+	}
+}
 
 // param_list 構造体
 struct param_list {
@@ -73,9 +129,6 @@ int check_argc(int argc, char *argv[], struct param_list *plist) {
 			}
 			plist->in_dbfile = argv[i];
 		} else if (strcmp(argv[i], "-o") == 0) {
-			if (plist->mode == MODE_DISPLAY) {
-				goto end;
-			}
 			if (i++ >= argc) {
 				goto end;
 			}
@@ -85,30 +138,52 @@ int check_argc(int argc, char *argv[], struct param_list *plist) {
 		}
 	}
 
+	//モードチェック
+	if (plist->mode == MODE_NOTSET) {
+		goto end;
+	}
+	if (plist->mode == MODE_DISPLAY && plist->out_dbfile) {
+		goto end;
+	}
+
 	ret = SUCCESS;
 	
 end:
-	fprintf(stderr, MSG_ERR_PARA);
+	if (ret != SUCCESS) {
+		fprintf(stderr, MSG_ERR_PARA);
+	}
+	
 	return ret;
 }
 
 // main関数
 int main(int argc, char *argv[]) {
 	struct param_list plist = {0};
-	FILE *fp;
-	int file_close_status;
+	word_data *head = NULL;
+	// FILE *fp;
+	// int file_close_status;
 	int rc = SUCCESS;
 
 	if (check_argc(argc, argv, &plist) != SUCCESS) {
 		return ERR_PARAM;
 	}
 
-	if ((fp = fopen(plist.infile,"r")) == NULL) {
-		fprintf(stderr, MSG_ERR_OPN_FILE);
-		return ERR_PARAM;
-	}
+	// if (read_infile(plist.infile, &head) != SUCCESS) {
+	// 	return ERR_PARAM;
+	// }
 
-	file_close_status = fclose(fp);
+	// if ((fp = fopen(plist.infile,"r")) == NULL) {
+	// 	fprintf(stderr, MSG_ERR_OPN_FILE);
+	// 	return ERR_PARAM;
+	// }
+
+	insert_into_list(&head, "Amazon");
+	insert_into_list(&head, "Amazon");
+	insert_into_list(&head, "RDS");
+	print_list(head);
+	free_list(head);
+
+	// file_close_status = fclose(fp);
 
 	return rc;
 }
