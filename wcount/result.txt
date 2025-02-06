@@ -1,0 +1,3 @@
+./a.out -i hello.txt
+world!                  1
+Hello,                  1

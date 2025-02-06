@@ -1,6 +1,7 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
+#include<errno.h>
 
 // エラー
 #define SUCCESS 0 // 正常終了
@@ -19,7 +20,7 @@
 #define MODE_DISPLAY 2 //DB表示モード
 
 // エラーメッセージ
-#define MSG_ERR_PARA\
+#define MSG_ERR_PARAM\
 		"usage: wcount [-o database] -i infile\n"\
 		"		wcount -r database\n" // 引数エラーメッセージ
 #define MSG_ERR_OPN_FILE "file open error. [%s][%s]\n" //ファイルオープンエラーメッセージ
@@ -35,8 +36,31 @@ typedef struct word_data_t {
 	struct word_data_t *next;
 } word_data;
 
+//insert_into_listのプロトタイプ宣言
+int insert_into_list(word_data **head, const char *input);
+
+//入力ファイルを処理する関数
+int read_infile(const char *filename, word_data **head, FILE **fp) {
+	char buffer[MAX_INFILE_ROW_LENGTH];
+		
+	if (filename == NULL || head == NULL) {
+		return ERR_PARAM;
+	}
+
+	if ((*fp = fopen(filename,"r")) == NULL) {
+		fprintf(stderr, MSG_ERR_OPN_FILE, filename, strerror(errno));
+		return ERR_PARAM;
+	}
+
+	while(fscanf(*fp, "%s", buffer) == 1) {
+		insert_into_list(head, buffer);
+	}
+
+	return SUCCESS;	
+}
+
 //リストに単語を入れる関数
-int insert_into_list(word_data **head, char *input) {
+int insert_into_list(word_data **head, const char *input) {
 	if (!input) {
 		return ERR_PARAM;
 	}
@@ -89,10 +113,9 @@ void print_list(word_data *head) {
 void free_list(word_data *head) {
 	word_data *current = head;
 	while (current != NULL) {
-		word_data *temp = current;
-		current = current->next;
-		free(temp->word);
-		free(temp);
+		word_data *next = current->next;
+		free(current);
+		current = next;
 	}
 }
 
@@ -150,7 +173,7 @@ int check_argc(int argc, char *argv[], struct param_list *plist) {
 	
 end:
 	if (ret != SUCCESS) {
-		fprintf(stderr, MSG_ERR_PARA);
+		fprintf(stderr, MSG_ERR_PARAM);
 	}
 	
 	return ret;
@@ -160,30 +183,27 @@ end:
 int main(int argc, char *argv[]) {
 	struct param_list plist = {0};
 	word_data *head = NULL;
-	// FILE *fp;
-	// int file_close_status;
-	int rc = SUCCESS;
+	FILE *fp;
+	int file_close_status, rc = SUCCESS;
 
 	if (check_argc(argc, argv, &plist) != SUCCESS) {
 		return ERR_PARAM;
 	}
 
-	// if (read_infile(plist.infile, &head) != SUCCESS) {
-	// 	return ERR_PARAM;
-	// }
+	if (read_infile(plist.infile, &head, &fp) != SUCCESS) {
+		return ERR_PARAM;
+	}
 
-	// if ((fp = fopen(plist.infile,"r")) == NULL) {
-	// 	fprintf(stderr, MSG_ERR_OPN_FILE);
-	// 	return ERR_PARAM;
-	// }
-
-	insert_into_list(&head, "Amazon");
-	insert_into_list(&head, "Amazon");
-	insert_into_list(&head, "RDS");
+	// insert_into_list(&head, "Amazon");
+	// insert_into_list(&head, "Amazon");
+	// insert_into_list(&head, "RDS");
 	print_list(head);
 	free_list(head);
 
-	// file_close_status = fclose(fp);
+	file_close_status = fclose(fp);
+	if (file_close_status != 0) {
+		return ERR_PARAM;
+	}
 
 	return rc;
 }
