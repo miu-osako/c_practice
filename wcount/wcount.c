@@ -42,6 +42,7 @@ int insert_into_list(word_data **head, const char *input);
 //入力ファイルを処理する関数
 int read_infile(const char *filename, word_data **head, FILE **fp) {
 	char buffer[MAX_INFILE_ROW_LENGTH];
+	int file_close_status;
 		
 	if (filename == NULL || head == NULL) {
 		return ERR_PARAM;
@@ -49,11 +50,16 @@ int read_infile(const char *filename, word_data **head, FILE **fp) {
 
 	if ((*fp = fopen(filename,"r")) == NULL) {
 		fprintf(stderr, MSG_ERR_OPN_FILE, filename, strerror(errno));
-		return ERR_PARAM;
+		return ERR_OPN_FILE;
 	}
 
 	while(fscanf(*fp, "%s", buffer) == 1) {
 		insert_into_list(head, buffer);
+	}
+
+	file_close_status = fclose(*fp);
+	if (file_close_status != 0) {
+		return ERR_PARAM;
 	}
 
 	return SUCCESS;	
@@ -61,50 +67,51 @@ int read_infile(const char *filename, word_data **head, FILE **fp) {
 
 //リストに単語を入れる関数
 int insert_into_list(word_data **head, const char *input) {
+	word_data *current = *head;
+	
 	if (!input) {
 		return ERR_PARAM;
 	}
-	if (*head == NULL) {
-		word_data *new_node = (word_data *)malloc(sizeof(word_data));
-		if (!new_node) {
-			return ERR_MALLOC;
-		}
-
-		new_node->word = strdup(input);
-		new_node->count = 1;
-		new_node->next = NULL;
-
-		*head = new_node;
-		return SUCCESS;
-	}
-
-	word_data *current = *head;
-	while (current != NULL) {
-		if (strcmp(current->word, input) == 0) {
-			current->count++;
-			return SUCCESS;
-		}
-		current = current->next;
-	}
-
+	
 	word_data *new_node = (word_data *)malloc(sizeof(word_data));
-	if (!new_node) {
-		return ERR_MALLOC;
-	}
+    if (!new_node) {
+        return ERR_MALLOC;
+    }
 
-	new_node->word = strdup(input);
-	new_node->count = 1;
-	new_node->next = *head;
+    new_node->word = strdup(input);
+    if (new_node->word == NULL) {
+        free(new_node);
+        return ERR_MALLOC;
+    }
 
-	*head = new_node;
+    new_node->count = 1;
+    new_node->next = NULL;
 
-	return SUCCESS;
+    if (*head == NULL) {
+        *head = new_node;
+        return SUCCESS;
+    }
+
+    if (strcmp(new_node->word, (*head)->word) < 0) {
+        new_node->next = *head;
+        *head = new_node;
+        return SUCCESS;
+    }
+
+    while (current->next != NULL && strcmp(new_node->word, current->next->word) > 0) {
+        current = current->next;
+    }
+
+    new_node->next = current->next;
+    current->next = new_node;
+
+    return SUCCESS; 
 }
 
 //リストの内容を表示する関数
 void print_list(word_data *head) {
 	while (head != NULL) {
-		printf("%s			%d			\n", head->word, head->count);
+		printf("%-20s%10d\n", head->word, head->count);
 		head = head->next;
 	}
 }
@@ -184,26 +191,18 @@ int main(int argc, char *argv[]) {
 	struct param_list plist = {0};
 	word_data *head = NULL;
 	FILE *fp;
-	int file_close_status, rc = SUCCESS;
+	int rc = SUCCESS;
 
 	if (check_argc(argc, argv, &plist) != SUCCESS) {
 		return ERR_PARAM;
 	}
 
 	if (read_infile(plist.infile, &head, &fp) != SUCCESS) {
-		return ERR_PARAM;
+		return errno;
 	}
 
-	// insert_into_list(&head, "Amazon");
-	// insert_into_list(&head, "Amazon");
-	// insert_into_list(&head, "RDS");
 	print_list(head);
 	free_list(head);
-
-	file_close_status = fclose(fp);
-	if (file_close_status != 0) {
-		return ERR_PARAM;
-	}
 
 	return rc;
 }
