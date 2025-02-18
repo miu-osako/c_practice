@@ -103,24 +103,31 @@ void free_list(word_data *head) {
 }
 
 // 入力ファイルを処理する関数
-int read_infile(const char *filename, word_data *head, FILE **fp) {
+int read_infile(const char *filename, word_data *head) {
 	char buffer[MAX_INFILE_ROW_LENGTH];
+	FILE *fp;
 	int rc = SUCCESS;
 	
-	if ((*fp = fopen(filename, "r")) == NULL) {
+	if ((fp = fopen(filename, "r")) == NULL) {
 		rc = ERR_OPN_FILE;
+		goto end;
 	}
 
-	while (fscanf(*fp, "%s", buffer) == 1) {
-		insert_into_list(head, buffer);
+	// 最終的にはfreadを使う
+	while (fscanf(fp, "%s", buffer) == 1) {
+		if ((rc = insert_into_list(head, buffer)) != SUCCESS) {
+			goto end;
+		}
+	}
+
+	if (ferror(fp)) {
+		rc = ERR_SYSTEM;
+		goto end;
 	}
 	
-	if (ferror(*fp)) {
-		rc = ERR_FILE_FORMAT;
-	}
-
-	if (*fp && fclose(*fp)) {
-		rc = ERR_PARAM;
+end:
+	if (fp && fclose(fp)) {
+		rc = ERR_SYSTEM;
 	}
 
 	return rc;	
@@ -128,7 +135,7 @@ int read_infile(const char *filename, word_data *head, FILE **fp) {
 
 // 引数チェック関数
 int check_argc(int argc, char *argv[], struct param_list *plist) {
-	int i, rc = SUCCESS;
+	int i, rc = ERR_PARAM;
 	plist->mode = MODE_NOTSET;
 	
 	for (i = 1; i < argc; i++) {
@@ -167,12 +174,10 @@ int check_argc(int argc, char *argv[], struct param_list *plist) {
 	if (plist->mode == MODE_DISPLAY && plist->out_dbfile) {
 		goto end;
 	}
+
+	rc = SUCCESS;
 	
 end:
-	if (rc != SUCCESS) {
-		rc = ERR_PARAM;
- 	}
-	
 	return rc;
 }
 
@@ -211,14 +216,13 @@ int main(int argc, char *argv[])
 {
 	struct param_list plist = {0};
 	word_data head = {0};
-	FILE *fp;
 	int rc;
 
 	if ((rc = check_argc(argc, argv, &plist)) != SUCCESS) {
 		goto end;
 	}
 
-	if ((rc = read_infile(plist.infile, &head, &fp)) != SUCCESS) {
+	if ((rc = read_infile(plist.infile, &head)) != SUCCESS) {
 		goto end;
 	}
 

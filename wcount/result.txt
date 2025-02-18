@@ -1,3 +1,4 @@
+./wcount -i scrum.guide.txt 
 Guide                2
 Guide.               1
 Jeff                 1
