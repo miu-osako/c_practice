@@ -1,7 +1,7 @@
-#include<stdio.h>
-#include<stdlib.h>
-#include<string.h>
-#include<errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
 
 // エラー
 #define SUCCESS 0 // 正常終了
@@ -29,50 +29,39 @@
 #define MSG_ERR_MALLOC "memory allocation error.\n" //メモリ確保エラーメッセージ
 #define MSG_ERR_SYSTEM "system error.\n" //その他、致命的なエラーメッセージ
 
-//word_data型構造体
+// word_data型構造体
 typedef struct word_data_t {
 	char *word;
 	int count;
 	struct word_data_t *next;
 } word_data;
 
-//insert_into_listのプロトタイプ宣言
-int insert_into_list(word_data **head, const char *input);
+// param_list 構造体
+struct param_list {
+	int mode;
+	char *infile;
+	char *in_dbfile;
+	char *out_dbfile;
+};
 
-//入力ファイルを処理する関数
-int read_infile(const char *filename, word_data **head, FILE **fp) {
-	char buffer[MAX_INFILE_ROW_LENGTH];
-	int file_close_status;
-		
-	if (filename == NULL || head == NULL) {
-		return ERR_PARAM;
-	}
-
-	if ((*fp = fopen(filename,"r")) == NULL) {
-		fprintf(stderr, MSG_ERR_OPN_FILE, filename, strerror(errno));
-		return ERR_OPN_FILE;
-	}
-
-	while(fscanf(*fp, "%s", buffer) == 1) {
-		insert_into_list(head, buffer);
-	}
-
-	file_close_status = fclose(*fp);
-	if (file_close_status != 0) {
-		return ERR_PARAM;
-	}
-
-	return SUCCESS;	
-}
-
-//リストに単語を入れる関数
-int insert_into_list(word_data **head, const char *input) {
-	word_data *current = *head;
+// リストに単語を入れる関数
+int insert_into_list(word_data *head, const char *input) {
+	word_data *current = head;
 	
 	if (!input) {
 		return ERR_PARAM;
 	}
 	
+	while (current->next != NULL) {
+		if (strcmp(current->next->word, input) == 0) {
+			current->next->count++;
+			return SUCCESS;
+		} else if (strcmp(current->next->word, input) > 0) {
+			break;
+		}
+		current  = current->next;
+	}
+
 	word_data *new_node = (word_data *)malloc(sizeof(word_data));
     if (!new_node) {
         return ERR_MALLOC;
@@ -85,58 +74,61 @@ int insert_into_list(word_data **head, const char *input) {
     }
 
     new_node->count = 1;
-    new_node->next = NULL;
-
-    if (*head == NULL) {
-        *head = new_node;
-        return SUCCESS;
-    }
-
-    if (strcmp(new_node->word, (*head)->word) < 0) {
-        new_node->next = *head;
-        *head = new_node;
-        return SUCCESS;
-    }
-
-    while (current->next != NULL && strcmp(new_node->word, current->next->word) > 0) {
-        current = current->next;
-    }
-
     new_node->next = current->next;
-    current->next = new_node;
-
-    return SUCCESS; 
+	current->next = new_node;
+	
+	return SUCCESS;
 }
 
-//リストの内容を表示する関数
-void print_list(word_data *head) {
-	while (head != NULL) {
-		printf("%-20s%10d\n", head->word, head->count);
-		head = head->next;
+// リストの内容を表示する関数
+void print_list(const word_data *head) {
+	word_data *current = head->next;
+
+	while (current != NULL) {
+		printf("%-20s %d\n", current->word, current->count);
+		current = current->next;
 	}
 }
 
-//リストを解放する関数
+// リストを解放する関数
 void free_list(word_data *head) {
-	word_data *current = head;
+	word_data *current = head->next;
+
 	while (current != NULL) {
 		word_data *next = current->next;
+		free(current->word);
 		free(current);
 		current = next;
 	}
 }
 
-// param_list 構造体
-struct param_list {
-	int mode;
-	char *infile;
-	char *in_dbfile;
-	char *out_dbfile;
-};
+// 入力ファイルを処理する関数
+int read_infile(const char *filename, word_data *head, FILE **fp) {
+	char buffer[MAX_INFILE_ROW_LENGTH];
+	int rc = SUCCESS;
+	
+	if ((*fp = fopen(filename, "r")) == NULL) {
+		rc = ERR_OPN_FILE;
+	}
+
+	while (fscanf(*fp, "%s", buffer) == 1) {
+		insert_into_list(head, buffer);
+	}
+	
+	if (ferror(*fp)) {
+		rc = ERR_FILE_FORMAT;
+	}
+
+	if (*fp && fclose(*fp)) {
+		rc = ERR_PARAM;
+	}
+
+	return rc;	
+}
 
 // 引数チェック関数
 int check_argc(int argc, char *argv[], struct param_list *plist) {
-	int i, ret = ERR_PARAM;
+	int i, rc = SUCCESS;
 	plist->mode = MODE_NOTSET;
 	
 	for (i = 1; i < argc; i++) {
@@ -168,41 +160,72 @@ int check_argc(int argc, char *argv[], struct param_list *plist) {
 		}
 	}
 
-	//モードチェック
+	// モードチェック
 	if (plist->mode == MODE_NOTSET) {
 		goto end;
 	}
 	if (plist->mode == MODE_DISPLAY && plist->out_dbfile) {
 		goto end;
 	}
-
-	ret = SUCCESS;
 	
 end:
-	if (ret != SUCCESS) {
-		fprintf(stderr, MSG_ERR_PARAM);
-	}
+	if (rc != SUCCESS) {
+		rc = ERR_PARAM;
+ 	}
 	
-	return ret;
+	return rc;
 }
 
+void print_error(int rc, const char *filename) {
+	switch (rc) {
+		case SUCCESS:
+			break;
+		case ERR_PARAM:
+			fprintf(stderr, MSG_ERR_PARAM);
+			break;
+		case ERR_OPN_FILE:
+			fprintf(stderr, MSG_ERR_OPN_FILE, filename, strerror(errno));
+			break;
+		case ERR_FILE_FORMAT:
+			fprintf(stderr, MSG_ERR_FILE_FORMAT, filename);
+			break;
+		case ERR_DBFILE_FORMAT:
+			fprintf(stderr, MSG_ERR_FILE_FORMAT, filename);
+			break;
+		case ERR_MALLOC:
+			fprintf(stderr, MSG_ERR_MALLOC);
+			break;
+		case ERR_SYSTEM:
+			fprintf(stderr, MSG_ERR_SYSTEM);
+			break;
+		// defineで定義
+		default:
+			fprintf(stderr, "Error: Unhandled error code %d.\n", rc);
+			break;
+	}
+}
+
+
 // main関数
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
 	struct param_list plist = {0};
-	word_data *head = NULL;
+	word_data head = {0};
 	FILE *fp;
-	int rc = SUCCESS;
+	int rc;
 
-	if (check_argc(argc, argv, &plist) != SUCCESS) {
-		return ERR_PARAM;
+	if ((rc = check_argc(argc, argv, &plist)) != SUCCESS) {
+		goto end;
 	}
 
-	if (read_infile(plist.infile, &head, &fp) != SUCCESS) {
-		return errno;
+	if ((rc = read_infile(plist.infile, &head, &fp)) != SUCCESS) {
+		goto end;
 	}
 
-	print_list(head);
-	free_list(head);
+	print_list(&head);
+	free_list(&head);
 
+end:
+	print_error(rc, plist.infile);
 	return rc;
 }
