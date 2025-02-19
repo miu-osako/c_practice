@@ -61,20 +61,20 @@ int insert_into_list(word_data *head, const char *input) {
 		}
 		current  = current->next;
 	}
-
+	
 	word_data *new_node = (word_data *)malloc(sizeof(word_data));
-    if (!new_node) {
-        return ERR_MALLOC;
-    }
-
-    new_node->word = strdup(input);
-    if (new_node->word == NULL) {
-        free(new_node);
-        return ERR_MALLOC;
-    }
-
-    new_node->count = 1;
-    new_node->next = current->next;
+	if (!new_node) {
+		return ERR_MALLOC;
+	}
+	
+	new_node->word = strdup(input);
+	if (new_node->word == NULL) {
+		free(new_node);
+		return ERR_MALLOC;
+	}
+	
+	new_node->count = 1;
+	new_node->next = current->next;
 	current->next = new_node;
 	
 	return SUCCESS;
@@ -195,7 +195,7 @@ void print_error(int rc, const char *filename) {
 			fprintf(stderr, MSG_ERR_FILE_FORMAT, filename);
 			break;
 		case ERR_DBFILE_FORMAT:
-			fprintf(stderr, MSG_ERR_FILE_FORMAT, filename);
+			fprintf(stderr, MSG_ERR_DBFILE_FORMAT, filename);
 			break;
 		case ERR_MALLOC:
 			fprintf(stderr, MSG_ERR_MALLOC);
