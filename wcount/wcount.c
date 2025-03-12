@@ -36,7 +36,12 @@ typedef struct word_data_t {
 	struct word_data_t *next;
 } word_data;
 
-// param_list 構造体
+// input_word_data構造体
+typedef struct input_word_data_t {
+	word_data *head;
+} input_word_data;
+
+// param_list構造体
 struct param_list {
 	int mode;
 	char *infile;
@@ -45,7 +50,8 @@ struct param_list {
 };
 
 // リストに単語を入れる関数
-int insert_into_list(word_data *head, const char *input) {
+int insert_into_list(word_data *head, const char *input)
+{
 	word_data *current = head;
 	
 	if (!input) {
@@ -81,7 +87,8 @@ int insert_into_list(word_data *head, const char *input) {
 }
 
 // リストの内容を表示する関数
-void print_list(const word_data *head) {
+void print_list(const word_data *head)
+{
 	word_data *current = head->next;
 
 	while (current != NULL) {
@@ -91,7 +98,8 @@ void print_list(const word_data *head) {
 }
 
 // リストを解放する関数
-void free_list(word_data *head) {
+void free_list(word_data *head)
+{
 	word_data *current = head->next;
 
 	while (current != NULL) {
@@ -103,7 +111,8 @@ void free_list(word_data *head) {
 }
 
 // 入力ファイルを処理する関数
-int read_infile(const char *filename, word_data *head) {
+int read_infile(const char *filename, word_data *head)
+{
 	char buffer[MAX_INFILE_ROW_LENGTH];
 	FILE *fp;
 	int rc = SUCCESS;
@@ -133,8 +142,50 @@ end:
 	return rc;	
 }
 
+// databaseにファイル書込みする関数
+int write_to_database(const char *database_filename, const word_data *head)
+{
+	int length, rc = SUCCESS;
+	word_data *current = head->next;
+	FILE *db_fp;
+	size_t size;
+	
+	if ((db_fp = fopen(database_filename, "wb")) == NULL) {
+		rc = ERR_OPN_FILE;
+		goto end;
+	}
+
+	while (current != NULL) {
+		length = strlen(current->word) + 1;
+		size = fwrite(&length, sizeof(int), 1, db_fp);
+		if (size < 1) {
+			rc = ERR_SYSTEM;
+			goto end;
+		}
+		size = fwrite(&current->word, sizeof(char), length, db_fp);
+		if (size < length) {
+			rc = ERR_SYSTEM;
+			goto end;
+		}
+		size = fwrite(&current->count, sizeof(int), 1, db_fp);
+		if (size < 1) {
+			rc = ERR_SYSTEM;
+			goto end;
+		}
+		current = current->next;
+	}
+
+end:
+	if (db_fp && fclose(db_fp)) {
+		rc = ERR_SYSTEM;
+	}
+
+	return rc;
+}
+
 // 引数チェック関数
-int check_argc(int argc, char *argv[], struct param_list *plist) {
+int check_argc(int argc, char *argv[], struct param_list *plist)
+{
 	int i, rc = ERR_PARAM;
 	plist->mode = MODE_NOTSET;
 	
@@ -181,7 +232,8 @@ end:
 	return rc;
 }
 
-void print_error(int rc, const char *filename) {
+void print_error(int rc, const char *filename)
+{
 	switch (rc) {
 		case SUCCESS:
 			break;
@@ -210,7 +262,6 @@ void print_error(int rc, const char *filename) {
 	}
 }
 
-
 // main関数
 int main(int argc, char *argv[])
 {
@@ -226,7 +277,13 @@ int main(int argc, char *argv[])
 		goto end;
 	}
 
-	print_list(&head);
+	if (plist.out_dbfile) {
+		if ((rc = write_to_database(plist.out_dbfile, &head)) != SUCCESS) {
+			goto end;
+		}
+	} else {
+		print_list(&head);
+	}
 	free_list(&head);
 
 end:
