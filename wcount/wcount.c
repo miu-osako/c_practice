@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <arpa/inet.h>
 
 // エラー
 #define SUCCESS 0 // 正常終了
@@ -24,8 +25,8 @@
 		"usage: wcount [-o database] -i infile\n"\
 		"		wcount -r database\n" // 引数エラーメッセージ
 #define MSG_ERR_OPN_FILE "file open error. [%s][%s]\n" //ファイルオープンエラーメッセージ
-#define MSG_ERR_FILE_FORMAT "invalide file format. [%s]\n" //入力ファイルフォーマットエラーメッセージ
-#define MSG_ERR_DBFILE_FORMAT "invalide database format. [%s]\n" //databaseファイルフォーマットエラーメッセージ
+#define MSG_ERR_FILE_FORMAT "invalid file format. [%s]\n" //入力ファイルフォーマットエラーメッセージ
+#define MSG_ERR_DBFILE_FORMAT "invalid database format. [%s]\n" //databaseファイルフォーマットエラーメッセージ
 #define MSG_ERR_MALLOC "memory allocation error.\n" //メモリ確保エラーメッセージ
 #define MSG_ERR_SYSTEM "system error.\n" //その他、致命的なエラーメッセージ
 
@@ -50,7 +51,7 @@ struct param_list {
 };
 
 // リストに単語を入れる関数
-int insert_into_list(word_data *head, const char *input)
+int insert_into_list(word_data *head, const char *input, int count)
 {
 	word_data *current = head;
 	
@@ -124,7 +125,7 @@ int read_infile(const char *filename, word_data *head)
 
 	// 最終的にはfreadを使う
 	while (fscanf(fp, "%s", buffer) == 1) {
-		if ((rc = insert_into_list(head, buffer)) != SUCCESS) {
+		if ((rc = insert_into_list(head, buffer, 1)) != SUCCESS) {
 			goto end;
 		}
 	}
@@ -143,31 +144,35 @@ end:
 }
 
 // databaseにファイル書込みする関数
-int write_to_database(const char *database_filename, const word_data *head)
+int write_to_database(const char *filename, const word_data *head)
 {
-	int length, rc = SUCCESS;
+	int length, int_big_endian, rc = SUCCESS;
 	word_data *current = head->next;
-	FILE *db_fp;
+	FILE *fp;
 	size_t size;
 	
-	if ((db_fp = fopen(database_filename, "wb")) == NULL) {
+	if ((fp = fopen(filename, "wb")) == NULL) {
 		rc = ERR_OPN_FILE;
 		goto end;
 	}
 
 	while (current != NULL) {
 		length = strlen(current->word) + 1;
-		size = fwrite(&length, sizeof(int), 1, db_fp);
+		int_big_endian = htonl(length); // host_to_network_lang(int)
+		size = fwrite(&int_big_endian, sizeof(int), 1, fp);
 		if (size < 1) {
 			rc = ERR_SYSTEM;
 			goto end;
 		}
-		size = fwrite(&current->word, sizeof(char), length, db_fp);
+
+		size = fwrite(current->word, sizeof(char), length, fp);
 		if (size < length) {
 			rc = ERR_SYSTEM;
 			goto end;
 		}
-		size = fwrite(&current->count, sizeof(int), 1, db_fp);
+
+		int_big_endian = htonl(current->count);
+		size = fwrite(&int_big_endian, sizeof(int), 1, fp);
 		if (size < 1) {
 			rc = ERR_SYSTEM;
 			goto end;
@@ -176,7 +181,88 @@ int write_to_database(const char *database_filename, const word_data *head)
 	}
 
 end:
-	if (db_fp && fclose(db_fp)) {
+	if (fp && fclose(fp)) {
+		rc = ERR_SYSTEM;
+	}
+
+	return rc;
+}
+
+// databaseからファイル読込する関数
+int read_from_database(const char *filename, word_data *head)
+{
+	char buffer[MAX_INFILE_ROW_LENGTH];
+	FILE *fp;
+	int length, count, int_big_endian, rc = SUCCESS;
+	size_t size;	
+	
+	if ((fp = fopen(filename, "rb")) == NULL) {
+		rc = ERR_OPN_FILE;
+		goto end;
+	}
+	
+	for (;;) {
+		size = fread(&int_big_endian, 1, sizeof(int), fp);
+		if (size < sizeof(int)) {
+			if (size == 0) {
+				if (feof(fp) == 0) {
+					rc = ERR_SYSTEM;
+				} else {
+					rc = SUCCESS; // 正常系
+				}
+			} else {
+				printf("a\n");
+				rc = ERR_DBFILE_FORMAT;
+			}
+			goto end;
+		}
+
+		printf("int_big_endian = %d", int_big_endian);
+		length = ntohl(int_big_endian);
+		if (length <= 0 || length > MAX_INFILE_ROW_LENGTH) {
+			printf("b\n");
+			rc = ERR_DBFILE_FORMAT;
+			goto end;
+		}
+		
+		size = fread(buffer, length, sizeof(char), fp);
+		printf("size = %d, length = %d", size, length);
+		if (size != length) {
+			printf("c\n");
+			rc = ERR_DBFILE_FORMAT;
+			goto end;
+		}
+
+		size = fread(&int_big_endian, 1, sizeof(int), fp);
+		if (size < sizeof(int)) {
+			if (size == 0) {
+				if (feof(fp) == 0) {
+					rc = ERR_SYSTEM;
+				} else {
+					printf("d\n");
+					rc = ERR_DBFILE_FORMAT;
+				}
+			} else {
+				rc = ERR_SYSTEM;
+			}
+			goto end;
+		}
+
+		count = ntohl(int_big_endian);
+		
+		rc = insert_into_list(head, buffer, count);
+		if (rc != SUCCESS) {
+			goto end;
+		}
+	}
+
+	if (ferror(fp)) {
+		rc = ERR_SYSTEM;
+		goto end;
+	}
+	
+end:
+	if (fp && fclose(fp)) {
 		rc = ERR_SYSTEM;
 	}
 
@@ -273,20 +359,38 @@ int main(int argc, char *argv[])
 		goto end;
 	}
 
-	if ((rc = read_infile(plist.infile, &head)) != SUCCESS) {
-		goto end;
-	}
-
-	if (plist.out_dbfile) {
-		if ((rc = write_to_database(plist.out_dbfile, &head)) != SUCCESS) {
+	// 入力モード
+	if (plist.mode == MODE_INPUT) {
+		// DBファイル読込
+		if ((rc = read_from_database(plist.in_dbfile, &head)) != SUCCESS) {
+			goto end;
+		} else if ((rc = read_infile(plist.infile, &head)) != SUCCESS) { // 入力ファイル読込
 			goto end;
 		}
+		
+		if (plist.out_dbfile) { // DBファイル書込
+			if ((rc = write_to_database(plist.out_dbfile, &head)) != SUCCESS) {
+				goto end;
+			}
+
+		} else { // 標準出力表示
+			print_list(&head);
+		}
+
+	// DB表示モード
 	} else {
+		// DBファイル読込
+		if ((rc = read_from_database(plist.in_dbfile, &head)) != SUCCESS) {
+			goto end;
+		}
+
+		// 標準出力表示
 		print_list(&head);
 	}
-	free_list(&head);
 
 end:
+	free_list(&head);
 	print_error(rc, plist.infile);
 	return rc;
 }
+
