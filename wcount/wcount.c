@@ -211,24 +211,19 @@ int read_from_database(const char *filename, word_data *head)
 					rc = SUCCESS; // 正常系
 				}
 			} else {
-				printf("a\n");
 				rc = ERR_DBFILE_FORMAT;
 			}
 			goto end;
 		}
-
-		printf("int_big_endian = %d", int_big_endian);
+		
 		length = ntohl(int_big_endian);
 		if (length <= 0 || length > MAX_INFILE_ROW_LENGTH) {
-			printf("b\n");
 			rc = ERR_DBFILE_FORMAT;
 			goto end;
 		}
 		
-		size = fread(buffer, length, sizeof(char), fp);
-		printf("size = %d, length = %d", size, length);
+		size = fread(buffer, sizeof(char), length, fp);
 		if (size != length) {
-			printf("c\n");
 			rc = ERR_DBFILE_FORMAT;
 			goto end;
 		}
@@ -239,7 +234,6 @@ int read_from_database(const char *filename, word_data *head)
 				if (feof(fp) == 0) {
 					rc = ERR_SYSTEM;
 				} else {
-					printf("d\n");
 					rc = ERR_DBFILE_FORMAT;
 				}
 			} else {
