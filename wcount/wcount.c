@@ -158,7 +158,7 @@ int write_to_database(const char *filename, const word_data *head)
 
 	while (current != NULL) {
 		length = strlen(current->word) + 1;
-		int_big_endian = htonl(length); // host_to_network_lang(int)
+		int_big_endian = htonl(length); // host_to_network_long(int)
 		size = fwrite(&int_big_endian, sizeof(int), 1, fp);
 		if (size < 1) {
 			rc = ERR_SYSTEM;
