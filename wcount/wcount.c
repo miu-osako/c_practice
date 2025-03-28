@@ -42,7 +42,7 @@ typedef struct input_word_data_t {
 	word_data *head;
 } input_word_data;
 
-// param_list構造体
+// param_list 構造体
 struct param_list {
 	int mode;
 	char *infile;
@@ -387,4 +387,3 @@ end:
 	print_error(rc, plist.infile);
 	return rc;
 }
-

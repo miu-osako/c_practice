@@ -1,0 +1,9 @@
+gcc -Wall -o allocate_memory appendix1.c 
+
+./allocate_memory 100M
+1 = size = 104857600
+address = 0x72eb77200010
+
+./allocate_memory 50K
+1 = size = 51200
+address = 0x5aaef94c02a0
