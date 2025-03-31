@@ -46,8 +46,8 @@ typedef struct input_word_data_t {
 struct param_list {
 	int mode;
 	char *infile;
-	char *in_dbfile;
-	char *out_dbfile;
+	char *display_dbfile;
+	char *dbfile;
 };
 
 // リストに単語を入れる関数
@@ -61,7 +61,7 @@ int insert_into_list(word_data *head, const char *input, int count)
 	
 	while (current->next != NULL) {
 		if (strcmp(current->next->word, input) == 0) {
-			current->next->count++;
+			current->next->count += count;
 			return SUCCESS;
 		} else if (strcmp(current->next->word, input) > 0) {
 			break;
@@ -80,7 +80,7 @@ int insert_into_list(word_data *head, const char *input, int count)
 		return ERR_MALLOC;
 	}
 	
-	new_node->count = 1;
+	new_node->count = 0 + count;
 	new_node->next = current->next;
 	current->next = new_node;
 	
@@ -275,7 +275,7 @@ int check_argc(int argc, char *argv[], struct param_list *plist)
 				goto end;
 			}
 			plist->mode = MODE_INPUT;
-			if (i++ >= argc) {
+			if (++i >= argc) {
 				goto end;
 			}
 			plist->infile = argv[i];
@@ -284,15 +284,15 @@ int check_argc(int argc, char *argv[], struct param_list *plist)
 				goto end;
 			}
 			plist->mode = MODE_DISPLAY;
-			if (i++ >= argc) {
+			if (++i >= argc) {
 				goto end;
 			}
-			plist->in_dbfile = argv[i];
+			plist->display_dbfile = argv[i];
 		} else if (strcmp(argv[i], "-o") == 0) {
-			if (i++ >= argc) {
+			if (++i >= argc) {
 				goto end;
 			}
-			plist->out_dbfile = argv[i];
+			plist->dbfile = argv[i];
 		} else {
 			goto end;
 		}
@@ -302,7 +302,7 @@ int check_argc(int argc, char *argv[], struct param_list *plist)
 	if (plist->mode == MODE_NOTSET) {
 		goto end;
 	}
-	if (plist->mode == MODE_DISPLAY && plist->out_dbfile) {
+	if (plist->mode == MODE_DISPLAY && plist->dbfile) {
 		goto end;
 	}
 
@@ -356,14 +356,22 @@ int main(int argc, char *argv[])
 	// 入力モード
 	if (plist.mode == MODE_INPUT) {
 		// DBファイル読込
-		if ((rc = read_from_database(plist.in_dbfile, &head)) != SUCCESS) {
-			goto end;
-		} else if ((rc = read_infile(plist.infile, &head)) != SUCCESS) { // 入力ファイル読込
+		if (plist.dbfile) {
+			if ((rc = read_from_database(plist.dbfile, &head)) != SUCCESS) {
+				if (errno == ENOENT) {
+					// ファイルが存在しない場合処理を正常に継続
+				} else {
+					goto end;
+				}
+			}
+		}
+		
+		if ((rc = read_infile(plist.infile, &head)) != SUCCESS) { // 入力ファイル読込
 			goto end;
 		}
 		
-		if (plist.out_dbfile) { // DBファイル書込
-			if ((rc = write_to_database(plist.out_dbfile, &head)) != SUCCESS) {
+		if (plist.dbfile) { // DBファイル書込
+			if ((rc = write_to_database(plist.dbfile, &head)) != SUCCESS) {
 				goto end;
 			}
 
@@ -374,7 +382,7 @@ int main(int argc, char *argv[])
 	// DB表示モード
 	} else {
 		// DBファイル読込
-		if ((rc = read_from_database(plist.in_dbfile, &head)) != SUCCESS) {
+		if ((rc = read_from_database(plist.display_dbfile, &head)) != SUCCESS) {
 			goto end;
 		}
 
